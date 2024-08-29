@@ -3,15 +3,25 @@
 namespace YourNamespace\SlackNotifier;
 
 use Illuminate\Support\Facades\Http;
+use Exception;
 
 class SlackNotifier
 {
     public static function notify($email)
     {
         $webhookUrl = config('slack-new-user-notifier.webhook_url');
-        $appName = config('slack-new-user-notifier.app_name', config('app.name'));
-        $maskedEmail = self::maskEmail($email);
 
+        if (empty($webhookUrl)) {
+            throw new Exception('Slack webhook URL is not set.');
+        }
+
+        $appName = config('app.name') ?: config('slack-new-user-notifier.app_name');
+
+        if (empty($appName)) {
+            throw new Exception('Application name is not set.');
+        }
+
+        $maskedEmail = self::maskEmail($email);
         $message = "{$appName} - New user registration: {$maskedEmail}";
 
         Http::post($webhookUrl, [
@@ -19,9 +29,9 @@ class SlackNotifier
         ]);
     }
 
-    protected static function maskEmail($email)
+    public static function maskEmail($email)
     {
         $parts = explode('@', $email);
-        return substr($parts[0], 0, 3) . str_repeat('*', strlen($parts[0]) - 3) . '@' . $parts[1];
+        return substr($parts[0], 0, 2) . '***@' . $parts[1];
     }
 }

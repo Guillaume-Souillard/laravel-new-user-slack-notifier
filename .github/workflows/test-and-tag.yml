@@ -1,0 +1,91 @@
+name: Test and Tag on Merge to Master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' # Change to your PHP version
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run tests
+        run: vendor/bin/phpunit
+
+  tag:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Get the latest tag
+        id: get_latest_tag
+        run: |
+          TAG=$(git describe --tags `git rev-list --tags --max-count=1` || echo "0.0.0")
+          echo "Latest tag: $TAG"
+          echo "::set-output name=tag::$TAG"
+
+      - name: Determine version bump type
+        id: version_bump
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MESSAGE"
+          
+          if [[ $COMMIT_MESSAGE == *"bump:major"* ]]; then
+            echo "::set-output name=bump_type::major"
+          elif [[ $COMMIT_MESSAGE == *"bump:minor"* ]]; then
+            echo "::set-output name=bump_type::minor"
+          else
+            echo "::set-output name=bump_type::patch"
+          fi
+
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          TAG=${{ steps.get_latest_tag.outputs.tag }}
+          BUMP_TYPE=${{ steps.version_bump.outputs.bump_type }}
+          echo "Current Tag: $TAG"
+          echo "Bump Type: $BUMP_TYPE"
+          
+          IFS='.' read -r -a VERSION_PARTS <<< "$TAG"
+          
+          if [ "$BUMP_TYPE" == "major" ]; then
+            NEW_MAJOR=$((VERSION_PARTS[0] + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          elif [ "$BUMP_TYPE" == "minor" ]; then
+            NEW_MAJOR=${VERSION_PARTS[0]}
+            NEW_MINOR=$((VERSION_PARTS[1] + 1))
+            NEW_PATCH=0
+          else
+            NEW_MAJOR=${VERSION_PARTS[0]}
+            NEW_MINOR=${VERSION_PARTS[1]}
+            NEW_PATCH=$((VERSION_PARTS[2] + 1))
+          fi
+          
+          NEW_TAG="$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
+          echo "New Tag: $NEW_TAG"
+          
+          echo "::set-output name=new_tag::$NEW_TAG"
+
+      - name: Create new tag
+        run: |
+          git tag ${{ steps.calculate_version.outputs.new_tag }}
+          git push origin ${{ steps.calculate_version.outputs.new_tag }}

@@ -89,6 +89,19 @@ To run the tests, you can use PHPUnit:
 vendor/bin/phpunit
 ```
 
+### Commit Rules and Versioning
+
+This project follows semantic versioning. When making changes, use the following commit message conventions to automatically update the package version:
+
+- **Major Version Bump**: For breaking changes, include `bump:major` in your commit message.
+- **Minor Version Bump**: For adding backward-compatible features, include `bump:minor` in your commit message.
+- **Patch Version Bump**: For backward-compatible bug fixes or minor improvements, include `bump:patch` in your commit message.
+
+Example commit messages:
+- `Fix critical issue bump:major`
+- `Add new feature bump:minor`
+- `Fix minor bug bump:patch`
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

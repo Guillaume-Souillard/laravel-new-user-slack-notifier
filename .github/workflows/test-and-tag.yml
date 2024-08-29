@@ -16,7 +16,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2' # Change to your PHP version
+          php-version: '8.2'
           tools: composer
 
       - name: Install dependencies
@@ -85,7 +85,11 @@ jobs:
           
           echo "::set-output name=new_tag::$NEW_TAG"
 
-      - name: Create new tag
+      - name: Create and push new tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
         run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git tag ${{ steps.calculate_version.outputs.new_tag }}
-          git push origin ${{ steps.calculate_version.outputs.new_tag }}
+          git push https://x-access-token:${{ secrets.PAT_GITHUB }}@github.com/${{ github.repository }} --tags

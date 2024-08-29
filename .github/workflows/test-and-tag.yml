@@ -85,6 +85,18 @@ jobs:
           
           echo "::set-output name=new_tag::$NEW_TAG"
 
+      - name: Debugging Secrets
+        env:
+          MY_SECRET: ${{ secrets.PAT_GITHUB }}
+        shell: bash
+        run: |
+          if [ -z "$MY_SECRET" ]; then
+            echo "Secret is empty or not set"
+            exit 1
+          else
+            echo "Secret is set correctly"
+          fi
+
       - name: Create and push new tag
         run: |
           git config user.name "GitHub Actions"

@@ -32,14 +32,14 @@ jobs:
       - name: Debugging Secrets
         env:
           MY_SECRET: ${{ secrets.PAT_GITHUB }}
-          shell: bash
-          run: |
-            if [ -z "$MY_SECRET" ]; then
-              echo "Secret is empty or not set"
-              exit 1
-            else
-              echo "Secret is set correctly"
-            fi
+        shell: bash
+        run: |
+          if [ -z "$MY_SECRET" ]; then
+            echo "Secret is empty or not set"
+            exit 1
+          else
+            echo "Secret is set correctly"
+          fi
 
       - name: Checkout code
         uses: actions/checkout@v3
